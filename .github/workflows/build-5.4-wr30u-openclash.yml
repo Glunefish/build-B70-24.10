@@ -18,7 +18,7 @@ env:
   REPO_URL: https://github.com/padavanonly/immortalwrt-mt798x-24.10
   REPO_BRANCH: 2410
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: configs/wr30u-openclash.config
+  CONFIG_FILE: configs/5.4-wr30u-openclash.config
   DIY_P1_SH: scripts/2410-diy-part1.sh
   DIY_P2_SH: scripts/2410-diy-part2.sh
   UPLOAD_BIN_DIR: false
@@ -146,7 +146,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: 2410-release-openclash.txt
+        body_path: 5.4-release-openclash.txt
         files: ${{ env.FIRMWARE }}/*
 
     - name: Delete workflow runs
