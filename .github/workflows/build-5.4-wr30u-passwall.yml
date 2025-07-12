@@ -8,7 +8,7 @@
 # Description: Build OpenWrt using GitHub Actions
 #
 
-name: wr30u+passwall+openclash
+name: 5.4-wr30u+passwall+openclash
 
 on:
   repository_dispatch:
