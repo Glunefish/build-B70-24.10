@@ -1,3 +1,3 @@
 237 大佬 [24.10](https://github.com/padavanonly/immortalwrt-mt798x-24.10)  源码编译小米 WR30U/WR30T 路由器固件
-Immortalwrt 24.10（闭源MTK驱动）主路由版
+Immortalwrt 24.10（5.4 内核 + 闭源MTK驱动）主路由版
 默认IP地址：192.168.6.1
