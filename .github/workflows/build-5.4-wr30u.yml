@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build kernel 5.4-wr30u
+name: Kernel 5.4-wr30u
 
 on:
   repository_dispatch:
