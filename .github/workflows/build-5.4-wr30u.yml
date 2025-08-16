@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: Build immortalwrt 24.10 5.4-wr30u
+name: Build Immortalwrt 24.10 5.4-wr30u
 
 on:
   repository_dispatch:
