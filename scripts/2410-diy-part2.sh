@@ -117,17 +117,13 @@ UPDATE_VERSION() {
 #UPDATE_VERSION "tailscale"
 
 
-#不编译xray-core
-sed -i 's/+xray-core//' luci-app-passwall2/Makefile
-
 #删除官方的默认插件
 rm -rf ../feeds/luci/applications/luci-app-{passwall*,mosdns,dockerman,dae*,bypass*}
 rm -rf ../feeds/packages/net/{v2ray-geodata,dae*}
 
 #更新golang为最新版
-rm -rf ../feeds/packages/lang/golang
-git clone -b 24.x https://github.com/sbwml/packages_lang_golang ../feeds/packages/lang/golang
-
+#rm -rf ../feeds/packages/lang/golang
+#git clone -b 24.x https://github.com/sbwml/packages_lang_golang ../feeds/packages/lang/golang
 
 # 更换golang(默认)
 rm -rf feeds/packages/lang/golang
@@ -145,8 +141,6 @@ git clone https://github.com/xiaorouji/openwrt-passwall package/passwall-luci
 
 cp -r $GITHUB_WORKSPACE/package/* ./
 
-#coremark修复
-sed -i 's/mkdir \$(PKG_BUILD_DIR)\/\$(ARCH)/mkdir -p \$(PKG_BUILD_DIR)\/\$(ARCH)/g' ../feeds/packages/utils/coremark/Makefile
 
 #修改字体
 argon_css_file=$(find ./luci-theme-argon/ -type f -name "cascade.css")
