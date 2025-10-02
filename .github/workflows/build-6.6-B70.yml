@@ -67,17 +67,13 @@ jobs:
         $GITHUB_WORKSPACE/$DIY_P1_SH
         ./scripts/feeds update -a
 
-    - name: Load diy
+    - name: Load diy & Install feeds
       run: |
          # [ -e files ] && mv files openwrt/files
          chmod +x $DIY_P2_SH
          cd openwrt
          $GITHUB_WORKSPACE/$DIY_P2_SH
-
-    - name: Install feeds
-      run: |
-        cd openwrt
-        ./scripts/feeds install -a 
+         ./scripts/feeds install -a 
          
     - name: Load custom configuration
       run: |
