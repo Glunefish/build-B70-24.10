@@ -23,6 +23,7 @@ env:
   CONFIG_FILE: configs/6.6-B70.config
   DIY_P1_SH: scripts/2410-diy-part1.sh
   DIY_P2_SH: scripts/2410-diy-part2.sh
+  DIY_P3_SH: scripts/2410-diy-part3.sh
   RELEASE_FILE: 6.6-release-note.txt
   UPLOAD_BIN_DIR: false
   UPLOAD_FIRMWARE: true
@@ -69,6 +70,10 @@ jobs:
       run: |
          cd openwrt
          ./scripts/feeds update -a
+         # [ -e files ] && mv files openwrt/files
+         chmod +x $DIY_P2_SH
+         cd openwrt
+         $GITHUB_WORKSPACE/$DIY_P2_SH
          rm -rf feeds/packages/lang/golang
          git clone https://github.com/kenzok8/golang feeds/packages/lang/golang
 
@@ -91,9 +96,9 @@ jobs:
       run: |
         # [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_P2_SH
+        chmod +x $DIY_P3_SH
         cd openwrt
-        $GITHUB_WORKSPACE/$DIY_P2_SH
+        $GITHUB_WORKSPACE/$DIY_P3_SH
 
     - name: Download package
       id: package
