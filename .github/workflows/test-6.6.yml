@@ -20,7 +20,8 @@ env:
   REPO_URL: https://github.com/GruntFish/immortalwrt-mt798x-6.6
   REPO_BRANCH: openwrt-24.10-6.6
   FEEDS_CONF: feeds.conf.default
-  CONFIG_FILE: configs/6.6-B70.config
+  CONFIG_FILE: configs/test.config
+  DIY_P0_SH: scripts/Apply-HNAT-Patch.sh
   DIY_P1_SH: scripts/2410-diy-part1.sh
   DIY_P2_SH: scripts/2410-diy-part2.sh
   DIY_P3_SH: scripts/2410-diy-part3.sh
@@ -58,6 +59,13 @@ jobs:
         df -hT $PWD
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
+
+    - name: Apply HNAT Patch
+      run: |
+         # [ -e files ] && mv files openwrt/files
+         chmod +x $DIY_P0_SH
+         cd openwrt
+         $GITHUB_WORKSPACE/$DIY_P0_SH
 
     - name: Load custom feeds & update
       run: |
