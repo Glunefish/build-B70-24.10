@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: build-6.6-B70
+name: test-6.6-B70
 
 on:
   repository_dispatch:
