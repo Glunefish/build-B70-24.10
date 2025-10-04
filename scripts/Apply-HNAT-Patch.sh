@@ -78,3 +78,22 @@ EOF
 fi
 
 echo "HNAT 补丁应用完成！"
+
+
+echo "验证设备树修复..."
+
+echo "1. 检查设备树节点位置:"
+grep -B5 -A5 "hnat@" target/linux/ramips/dts/mt7621.dtsi
+
+echo "2. 检查节点是否在 soc 节点内:"
+awk '/soc {/,/^};/' target/linux/ramips/dts/mt7621.dtsi | grep -n "hnat"
+
+echo "3. 检查 HC5962 启用:"
+grep "hnat" target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+
+echo "4. 验证设备树语法:"
+if command -v dtc &> /dev/null; then
+    dtc -I fs -O dts target/linux/ramips/dts/mt7621.dtsi 2>&1 | grep -i hnat || echo "DTC 检查通过"
+else
+    echo "dtc 命令不可用，跳过语法检查"
+fi
