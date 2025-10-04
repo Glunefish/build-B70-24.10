@@ -60,13 +60,6 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-    - name: Apply HNAT Patch
-      run: |
-         # [ -e files ] && mv files openwrt/files
-         chmod +x $DIY_P0_SH
-         cd openwrt
-         $GITHUB_WORKSPACE/$DIY_P0_SH
-
     - name: Load custom feeds & update
       run: |
         [ -e $FEEDS_CONF ] && mv $FEEDS_CONF openwrt/feeds.conf.default
@@ -82,6 +75,13 @@ jobs:
          cd openwrt
          $GITHUB_WORKSPACE/$DIY_P2_SH
          ./scripts/feeds install -a 
+
+    - name: Apply HNAT Patch
+      run: |
+         # [ -e files ] && mv files openwrt/files
+         chmod +x $DIY_P0_SH
+         cd openwrt
+         $GITHUB_WORKSPACE/$DIY_P0_SH         
          
     - name: Load custom configuration
       run: |
