@@ -120,6 +120,30 @@ if command -v dtc &> /dev/null; then
 else
     echo "⚠️  dtc不可用，跳过语法检查"
 fi
+#!/bin/bash
+echo "=== 安全设备树修复 ==="
+
+# 恢复到原始备份
+cp target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts.backup target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+
+# 使用更安全的方法添加 HNAT
+# 找到文件的最后一个字符位置，确保在正确位置添加
+FILE_LINES=$(wc -l < target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts)
+
+# 在文件末尾添加 HNAT 引用（确保格式正确）
+{
+    echo ""
+    echo "/* Hardware NAT Support */"
+    echo "&hnat {"
+    echo "	status = \"okay\";"
+    echo "};"
+} >> target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+
+echo "✅ 安全修复完成"
+echo "验证语法..."
+if command -v dtc &> /dev/null; then
+    dtc -I fs -O dts target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts > /dev/null 2>&1 && echo "✅ 语法正确" || echo "❌ 语法错误"
+fi
 
 echo ""
 echo "=== HNAT补丁应用完成 ==="
