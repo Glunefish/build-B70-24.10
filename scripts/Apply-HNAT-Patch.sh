@@ -1,62 +1,70 @@
 #!/bin/bash
-echo "开始应用 HNAT 支持补丁..."
+echo "=== 应用正确的HNAT支持补丁（仅在HC5962启用）==="
 
-# 1. 创建必要的目录
-echo "创建驱动目录..."
-mkdir -p target/linux/ramips/files/drivers/net/ethernet/mediatek/
+# 0. 备份原始文件
+echo "备份原始文件..."
+cp target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts.orig 2>/dev/null || true
+cp target/linux/ramips/mt7621/config-6.6 target/linux/ramips/mt7621/config-6.6.orig
+cp target/linux/ramips/modules.mk target/linux/ramips/modules.mk.orig
 
-# 2. 复制驱动源码
-if [ -d "target/linux/mediatek/files-6.6/drivers/net/ethernet/mediatek/mtk_hnat" ]; then
-    echo "复制 HNAT 驱动源码..."
-    cp -r target/linux/mediatek/files-6.6/drivers/net/ethernet/mediatek/mtk_hnat target/linux/ramips/files/drivers/net/ethernet/mediatek/
+# 1. 首先检查mt7621.dtsi中是否已经有HNAT节点
+echo "1. 检查mt7621.dtsi中是否已有HNAT节点..."
+if grep -q "hnat@" target/linux/ramips/dts/mt7621.dtsi; then
+    echo "✅ mt7621.dtsi中已有HNAT节点，无需添加"
 else
-    echo "警告: Mediatek HNAT 驱动源码不存在"
-    # 创建基本的驱动文件结构
+    echo "⚠️  mt7621.dtsi中没有HNAT节点，需要添加..."
+    # 在mt7621.dtsi中添加HNAT节点定义
+    SOC_END=$(grep -n "^[[:space:]]*};[[:space:]]*$" target/linux/ramips/dts/mt7621.dtsi | head -1 | cut -d: -f1)
+    if [ -n "$SOC_END" ]; then
+        sed -i "${SOC_END}i\\\\thnat: hnat@1e100000 {\\n\\t\\tcompatible = \\\"mediatek,mtk-hnat\\\";\\n\\t\\treg = <0x1e100000 0x300000>;\\n\\t\\tstatus = \\\"disabled\\\";\\n\\t};" target/linux/ramips/dts/mt7621.dtsi
+        echo "✅ 已在mt7621.dtsi中添加HNAT节点"
+    fi
+fi
+
+# 2. 在HC5962设备树中启用HNAT
+echo "2. 在HC5962设备树中启用HNAT..."
+if [ -f "target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts" ]; then
+    # 删除可能存在的旧配置
+    sed -i '/&hnat/d' target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+    
+    # 在合适的位置添加HNAT启用配置（通常在文件末尾）
+    echo "" >> target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+    echo "&hnat {" >> target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+    echo "	status = \"okay\";" >> target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+    echo "};" >> target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+    
+    echo "✅ HC5962 HNAT已启用"
+else
+    echo "❌ HC5962设备树文件不存在"
+    exit 1
+fi
+
+# 3. 创建驱动目录并复制源码
+echo "3. 设置驱动源码..."
+mkdir -p target/linux/ramips/files/drivers/net/ethernet/mediatek/
+if [ -d "target/linux/mediatek/files-6.6/drivers/net/ethernet/mediatek/mtk_hnat" ]; then
+    cp -r target/linux/mediatek/files-6.6/drivers/net/ethernet/mediatek/mtk_hnat target/linux/ramips/files/drivers/net/ethernet/mediatek/
+    echo "✅ 驱动源码复制成功"
+else
+    echo "⚠️  驱动源码不存在，创建基本结构..."
     mkdir -p target/linux/ramips/files/drivers/net/ethernet/mediatek/mtk_hnat
     cat > target/linux/ramips/files/drivers/net/ethernet/mediatek/mtk_hnat/Makefile << 'EOF'
 obj-$(CONFIG_NET_MEDIATEK_HNAT) += mtk_hnat.o
+mtk_hnat-objs := hnat.o
 EOF
 fi
 
-# 3. 修复设备树节点 - 确保在正确的位置添加
-echo "修复设备树节点定义..."
-
-# 备份原文件
-cp target/linux/ramips/dts/mt7621.dtsi target/linux/ramips/dts/mt7621.dtsi.backup
-
-# 在合适的位置添加 hnat 节点（在 soc 节点内）
-sed -i '/soc {/,/^};/{
-    /ethernet@1e10000;/a\
-\thnat: hnat@1e100000 {\
-\t\tcompatible = "mediatek,mtk-hnat_v1";\
-\t\treg = <0x1e100000 0x3000>;\
-\t\tstatus = "disabled";\
-\t};
-}' target/linux/ramips/dts/mt7621.dtsi
-
-# 4. 在 HC5962 设备树中启用 HNAT
-echo "在 HC5962 设备树中启用 HNAT..."
-if [ -f "target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts" ]; then
-    # 先检查是否已经存在
-    if ! grep -q "&hnat" target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts; then
-        echo "&hnat { status = \"okay\"; };" >> target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
-    fi
+# 4. 添加内核配置
+echo "4. 添加内核配置..."
+if ! grep -q "CONFIG_NET_MEDIATEK_HNAT" target/linux/ramips/mt7621/config-6.6; then
+    echo "CONFIG_NET_MEDIATEK_HNAT=m" >> target/linux/ramips/mt7621/config-6.6
+    echo "✅ 内核配置已添加"
 else
-    echo "警告: HC5962 设备树文件不存在"
+    echo "⚠️  内核配置已存在"
 fi
 
-# 5. 添加内核配置
-echo "添加 HNAT 内核配置..."
-if [ -f "target/linux/ramips/mt7621/config-6.6" ]; then
-    if ! grep -q "CONFIG_NET_MEDIATEK_HNAT" target/linux/ramips/mt7621/config-6.6; then
-        echo "CONFIG_NET_MEDIATEK_HNAT=m" >> target/linux/ramips/mt7621/config-6.6
-    fi
-else
-    echo "警告: MT7621 内核配置文件不存在"
-fi
-
-# 6. 添加内核模块定义
-echo "添加 HNAT 内核模块定义..."
+# 5. 添加内核模块定义
+echo "5. 添加内核模块定义..."
 if ! grep -q "KernelPackage/mtk-hnat" target/linux/ramips/modules.mk; then
     cat >> target/linux/ramips/modules.mk << 'EOF'
 
@@ -75,25 +83,48 @@ endef
 
 $(eval $(call KernelPackage,mtk-hnat))
 EOF
-fi
-
-echo "HNAT 补丁应用完成！"
-
-
-echo "验证设备树修复..."
-
-echo "1. 检查设备树节点位置:"
-grep -B5 -A5 "hnat@" target/linux/ramips/dts/mt7621.dtsi
-
-echo "2. 检查节点是否在 soc 节点内:"
-awk '/soc {/,/^};/' target/linux/ramips/dts/mt7621.dtsi | grep -n "hnat"
-
-echo "3. 检查 HC5962 启用:"
-grep "hnat" target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
-
-echo "4. 验证设备树语法:"
-if command -v dtc &> /dev/null; then
-    dtc -I fs -O dts target/linux/ramips/dts/mt7621.dtsi 2>&1 | grep -i hnat || echo "DTC 检查通过"
+    echo "✅ 内核模块定义已添加"
 else
-    echo "dtc 命令不可用，跳过语法检查"
+    echo "⚠️  内核模块定义已存在"
 fi
+
+# 6. 验证补丁应用
+echo ""
+echo "=== 验证补丁应用结果 ==="
+echo "1. HC5962 HNAT启用状态:"
+if grep -q "&hnat" target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts; then
+    echo "✅ HC5962 HNAT已启用"
+    grep -A2 "&hnat" target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts
+else
+    echo "❌ HC5962 HNAT未启用"
+fi
+
+echo ""
+echo "2. 内核配置:"
+grep "CONFIG_NET_MEDIATEK_HNAT" target/linux/ramips/mt7621/config-6.6 || echo "❌ 内核配置未找到"
+
+echo ""
+echo "3. 模块定义:"
+grep "KernelPackage/mtk-hnat" target/linux/ramips/modules.mk || echo "❌ 模块定义未找到"
+
+echo ""
+echo "4. 驱动文件:"
+find target/linux/ramips/files -name "mtk_hnat" -type d 2>/dev/null | head -1 || echo "⚠️  驱动目录未找到"
+
+echo ""
+echo "=== 设备树语法验证 ==="
+if command -v dtc &> /dev/null; then
+    if [ -f "target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts" ]; then
+        dtc -I fs -O dts target/linux/ramips/dts/mt7621_hiwifi_hc5962.dts > /dev/null 2>&1 && echo "✅ HC5962 dts 语法正确" || echo "❌ HC5962 dts 语法错误"
+    fi
+else
+    echo "⚠️  dtc不可用，跳过语法检查"
+fi
+
+echo ""
+echo "=== HNAT补丁应用完成 ==="
+echo "总结:"
+echo "- 只在HC5962设备树中启用HNAT"
+echo "- 确保mt7621.dtsi中有HNAT节点定义"
+echo "- 添加了内核配置和模块定义"
+echo "- 设置了驱动源码"
