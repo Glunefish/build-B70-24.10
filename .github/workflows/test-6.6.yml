@@ -98,23 +98,16 @@ jobs:
       run: |
         # [ -e files ] && mv files openwrt/files
         chmod +x $DIY_P0_SH
+        
         cd openwrt
         echo -e "$(nproc) thread compile"
         
-        # 多线程编译并在后台运行
         make -j$(nproc) 2>&1 | tee /tmp/build.log &
-        make_pid=$!
-        
-        # 等待编译进入内核阶段后开始监控
-        sleep 300  # 等待5分钟让编译进入内核阶段
-        
-        # 执行 HNAT 监控脚本
+        make_pid=$!        
+        sleep 300
         $GITHUB_WORKSPACE/$DIY_P0_SH    
-         
-        # 等待编译完成
         wait $make_pid
         
-        # 如果失败则降级编译
         [ $? -ne 0 ] && make -j1 || make -j1 V=s
         
         echo "status=success" >> $GITHUB_OUTPUT
