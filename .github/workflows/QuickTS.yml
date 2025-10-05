@@ -60,7 +60,8 @@ jobs:
         git clone $REPO_URL -b $REPO_BRANCH openwrt
         ln -sf /workdir/openwrt $GITHUB_WORKSPACE/openwrt
 
-  - name: Check HNAT source existence
+    - name: Check HNAT source existence
+      working-directory: /workdir/openwrt  # 添加工作目录
       run: |
         echo "🔍 检查 HNAT 源码是否存在..."
         
@@ -84,6 +85,7 @@ jobs:
         fi
         
     - name: Configure for HNAT
+      working-directory: /workdir/openwrt  # 添加工作目录
       run: |
         echo "🔧 配置 HNAT 支持..."
         
@@ -104,6 +106,7 @@ jobs:
         grep -i "mediatek.*hnat" .config
         
     - name: Quick build and detect HNAT
+      working-directory: /workdir/openwrt  # 添加工作目录
       run: |
         echo "🚀 开始快速编译并检测 HNAT 模块..."
         
