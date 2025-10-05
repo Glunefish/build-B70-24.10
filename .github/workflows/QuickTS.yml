@@ -10,7 +10,7 @@
 # See /LICENSE for more information.
 #
 
-name: test-6.6-B70
+name: QuickTS
 
 on:
   repository_dispatch:
