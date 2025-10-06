@@ -93,6 +93,17 @@ jobs:
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
 
+    - name: Configure for HNAT
+      working-directory: /workdir/openwrt
+      run: |
+        echo "🔧 在 defconfig 后重新配置 HNAT..."
+        echo "CONFIG_NET_MEDIATEK_HNAT=m" >> .config
+        echo "CONFIG_NET_MTKSDK=y" >> .config
+        # 确保配置生效
+        make kernel_oldconfig
+        echo "📋 最终 HNAT 配置:"
+        grep "CONFIG_NET_MEDIATEK_HNAT" .config
+        
     - name: Compile the firmware
       id: compile
       run: |
