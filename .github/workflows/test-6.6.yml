@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
 
 env:
-  REPO_URL: https://github.com/GruntFish/immortalwrt-mtkhnat-6.6
+  REPO_URL: https://github.com/GruntFish/immortalwrt-24.10-6.6
   REPO_BRANCH: openwrt-24.10-6.6
   FEEDS_CONF: feeds.conf.default
   CONFIG_FILE: configs/test.config
@@ -92,35 +92,13 @@ jobs:
         make download -j8
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-
-    - name: Configure for HNAT
-      working-directory: /workdir/openwrt
-      run: |
-        echo "🔧 在 defconfig 后重新配置 HNAT..."
-        echo "CONFIG_NET_MEDIATEK_HNAT=m" >> .config
-        echo "CONFIG_NET_MTKSDK=y" >> .config
-        # 确保配置生效
-        make kernel_oldconfig
-        echo "📋 最终 HNAT 配置:"
-        grep "CONFIG_NET_MEDIATEK_HNAT" .config
         
     - name: Compile the firmware
       id: compile
       run: |
-        # [ -e files ] && mv files openwrt/files
-        chmod +x $DIY_P0_SH
-        
         cd openwrt
-        echo -e "$(nproc) thread compile"
-        
-        make -j$(nproc) 2>&1 | tee /tmp/build.log &
-        make_pid=$!        
-        sleep 300
-        $GITHUB_WORKSPACE/$DIY_P0_SH    
-        wait $make_pid
-        
-        [ $? -ne 0 ] && make -j1 || make -j1 V=s
-        
+        echo -e "$(nproc) thread compile"  
+        make -j$(nproc) 2>&1 | make -j1 || make -j1 V=s
         echo "status=success" >> $GITHUB_OUTPUT
         grep '^CONFIG_TARGET.*DEVICE.*=y' .config | sed -r 's/.*DEVICE_(.*)=y/\1/' > DEVICE_NAME
         [ -s DEVICE_NAME ] && echo "DEVICE_NAME=_$(cat DEVICE_NAME)" >> $GITHUB_ENV
